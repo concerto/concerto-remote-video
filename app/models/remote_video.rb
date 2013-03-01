@@ -84,4 +84,17 @@ class RemoteVideo < Content
       errors.add(:video_id, 'could not be found')
     end
   end
+
+  def render_details
+    settings = {
+      :autoplay => 1,  # Autostart the video
+      :end => self.duration,  # Stop it around the duration
+      :controls => 0,  # Don't show any controls
+      :modestbranding => 1,  # Use the less fancy branding
+      :rel => 0,  # Don't show related videos
+      :showinfo => 0,  # Don't show the video info
+      :iv_load_policy => 3  # Don't show any of those in-video labels
+    }
+    {:path => player_url(settings)}
+  end
 end
