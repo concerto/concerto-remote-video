@@ -1,0 +1,17 @@
+<fieldset>
+  <legend><span>YouTube Video</span></legend>
+  <%= form.fields_for :config do |config| %>
+    <div class="clearfix">
+      <%= config.label :video_id %>
+      <div class="input">
+        <%= config.text_field :video_id, :placeholder => 'nKIu9yen5nc', :size => 15 %>
+      </div>
+    </div>
+    <div class="clearfix">
+      <%= config.label :allow_flash, 'Allow Flash?' %>
+      <div class="input">
+        <%= config.select :allow_flash, [["No", 0], ["Yes", 1]] %>
+      </div>
+    </div>
+  <% end %>
+</fieldset>

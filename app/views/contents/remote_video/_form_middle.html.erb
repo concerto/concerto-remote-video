@@ -1,0 +1,21 @@
+<fieldset>
+  <legend><span><%=t(:provide_details)%></span></legend>
+  <div class="clearfix">
+    <%= form.label :name %>
+    <div class="input">
+      <%= form.text_field :name %>
+    </div>
+  </div>
+
+  <%= render :partial => 'contents/form_elements/dates', :locals => {:form => form} %>
+</fieldset>
+
+<fieldset>
+  <legend><span><%=t(:select_feed)%></span></legend>
+  <label>&nbsp;</label>
+  <div class="input">
+    <% if @content.new_record? %>
+      <%= render :partial => 'contents/form_elements/feeds' %>
+    <% end %>
+  </div>
+</fieldset>
