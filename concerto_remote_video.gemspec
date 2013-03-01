@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.summary     = "Remotely hosted video for Concerto 2"
   s.description = "Adds support for remotely hosted videos, like YouTube, in Concerto 2"
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["LICENSE", "Rakefile", "README.rdoc"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + ["LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
 
   s.add_dependency "rails", "~> 3.2"
