@@ -1,7 +1,7 @@
 require 'rails/generators'
 
 module ConcertoRemoteVideo
-  class InstallGenerator < Rails::Generators::NamedBase
+  class InstallGenerator < Rails::Generators::Base
     source_root File.expand_path('../../../../', __FILE__)
 
     desc 'Copy the RemoteVideo JavaScript to the frontend and register it.'
