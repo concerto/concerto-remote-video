@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email       = ["bmichalski@gmail.com"]
   s.homepage    = "https://github.com/concerto/concerto-remote-video"
   s.summary     = "Remotely hosted video for Concerto 2"
-  s.description = "Adds support for remotely hosted videos, like YouTube, in Concerto 2"
+  s.description = "Adds support for remotely hosted videos, like YouTube or vimeo, in Concerto 2"
 
   s.files = Dir["{app,config,db,lib,public}/**/*"] + ["LICENSE", "Rakefile", "README.md"]
   s.test_files = Dir["test/**/*"]
