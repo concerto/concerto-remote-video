@@ -1,6 +1,9 @@
+<%= javascript_include_tag :contents %>
 <fieldset>
   <legend><span><%= RemoteVideo::DISPLAY_NAME %></span></legend>
+<div class="row-fluid">
   <%= form.fields_for :config do |config| %>
+<div class='span4'>
     <div class="clearfix">
       <%= config.label :video_vendor, 'Video Vendor' %>
       <div class="input">
@@ -19,5 +22,17 @@
         <%= config.select :allow_flash, [["No", 0], ["Yes", 1]] %>
       </div>
     </div>
+    <div class="clearfix">
+      <%= form.label :duration %>
+      <div class="input">
+          <%= form.number_field :duration %>
+      </div>
+      (overridden by duration of video, if available)
+    </div>
+</div>
+<div>
+  <div class='remote-video-info'></div>
+</div>
   <% end %>
+</div>  
 </fieldset>
