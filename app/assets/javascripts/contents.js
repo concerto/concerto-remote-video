@@ -21,6 +21,7 @@ function attachHandlers() {
         // we found the vendor selection, call appropriate api
         if (vendor == 'YouTube') {
           $(info_el).empty().html('searching...');
+          // todo: dont search if video_id is empty
           $.ajax({
             url: 'http://gdata.youtube.com/feeds/api/videos?q='+ encodeURIComponent(video_id) +'&v=2&max-results=1&format=5&alt=jsonc',
             dataType: 'jsonp',

@@ -105,9 +105,7 @@ class RemoteVideo < Content
       end
       video_data = data[0]
       # some vimeo videos have zero for their duration, so in that case use what the user supplied
-Rails.logger.debug("MARVIN #{self.duration} before")
       self.duration = (video_data['duration'].to_i > 0 ? video_data['duration'].to_i : self.duration.to_i)
-Rails.logger.debug("MARVIN #{self.duration} after")
       self.config['thumb_url'] = video_data['thumbnail_small']
       self.config['title'] = video_data['title']
       self.config['description'] = video_data['description']
