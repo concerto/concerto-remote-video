@@ -1,0 +1,13 @@
+// contents.css
+
+div.remote-video-info {
+  padding: 1em;
+}
+
+div.remote-video-info img {
+  float: left;
+  max-width: 150px;
+  max-height: 150px;
+  margin: 0 5px 5px 0;
+  border: solid 1px black;
+}

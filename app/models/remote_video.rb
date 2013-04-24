@@ -5,9 +5,15 @@ class RemoteVideo < Content
   before_validation :save_config
 
   validate :video_id_must_exist
-  validates :duration, :numericality => { :greater_than => 0 }
+  #todo: put back, commented out because I keep getting duration is not a number
+  #validates :duration, :numericality => { :greater_than => 0 }
+  validate :video_vendor_supported
 
-  DISPLAY_NAME = 'YouTube Video'
+  DISPLAY_NAME = 'Video'
+  VIDEO_VENDORS = {
+    :YouTube => { :id => "YouTube", :url => "https://www.youtube.com/embed/" },
+    :Vimeo => { :id => "Vimeo", :url => "https://player.vimeo.com/video/" }
+  }
 
   attr_accessor :config
 
@@ -41,37 +47,74 @@ class RemoteVideo < Content
 
   def self.form_attributes
     attributes = super()
-    attributes.concat([:config => [:video_id, :allow_flash]])
+    # what about  :thumb_url, :title, :description
+    attributes.concat([:config => [:video_vendor, :video_id, :allow_flash]])
   end
 
   # Load some info about this video from YouTube.
   def load_info
-    return if self.config['video_id'].nil? || !self.duration.nil?
+    # dont abort if there is a duration specified
+    return if self.config['video_id'].nil? #|| !self.duration.nil?
     require 'net/http'
-    #begin
-      video_id = URI.escape(self.config['video_id'])
-      url = "http://gdata.youtube.com/feeds/api/videos?q=#{video_id}&v=2&max-results=1&format=5&alt=jsonc"
-      json = Net::HTTP.get_response(URI.parse(url)).body
-      data = ActiveSupport::JSON.decode(json)
-    #rescue
-    #  Rails.logger.debug("YouTube not reachable @ #{url}.")
-    #  config['video_id'] = ''
-    #  return
-    #end
-    if data['data']['totalItems'].to_i <= 0
-      Rails.logger.debug('No video found from ' + url)
-      self.config['video_id'] = ''
-      return
+    if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
+      #begin
+        video_id = URI.escape(self.config['video_id'])
+        url = "http://gdata.youtube.com/feeds/api/videos?q=#{video_id}&v=2&max-results=1&format=5&alt=jsonc"
+        json = Net::HTTP.get_response(URI.parse(url)).body
+        data = ActiveSupport::JSON.decode(json)
+      #rescue
+      #  Rails.logger.debug("YouTube not reachable @ #{url}.")
+      #  config['video_id'] = ''
+      #  return
+      #end
+      if data['data']['totalItems'].to_i <= 0
+        Rails.logger.debug('No video found from ' + url)
+        self.config['video_id'] = ''
+        return
+      end
+      video_data = data['data']['items'][0]
+      self.config['video_id'] = video_data['id']
+      self.duration = video_data['duration'].to_i
+      self.config['thumb_url'] = video_data['thumbnail']['hqDefault']
+      self.config['title'] = video_data['title']
+      self.config['description'] = video_data['description']
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
+      #todo: put these info urls in the VV constant
+      #http://vimeo.com/api/v2/video/video_id.json
+      data=[]
+      #begin
+        video_id = URI.escape(self.config['video_id'])
+        url = "http://vimeo.com/api/v2/video/#{video_id}.json"
+        uri = URI.parse(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        request = Net::HTTP::Get.new(uri.request_uri)
+        response = http.request(request)
+        if response.code == '200'  #ok
+          json = response.body
+          data = ActiveSupport::JSON.decode(json)
+        end
+      #rescue
+      #  Rails.logger.debug("YouTube not reachable @ #{url}.")
+      #  config['video_id'] = ''
+      #  return
+      #end
+      if data.empty?
+        Rails.logger.debug('No video found from ' + url)
+        self.config['video_id'] = ''
+        return
+      end
+      video_data = data[0]
+      # some vimeo videos have zero for their duration, so in that case use what the user supplied
+      self.duration = (video_data['duration'].to_i > 0 ? video_data['duration'].to_i : self.duration.to_i)
+      self.config['thumb_url'] = video_data['thumbnail_small']
+      self.config['title'] = video_data['title']
+      self.config['description'] = video_data['description']
     end
-    video_data = data['data']['items'][0]
-    self.config['video_id'] = video_data['id']
-    self.duration = video_data['duration'].to_i
-    self.config['thumb_url'] = video_data['thumbnail']['hqDefault']
   end
 
   # Build a URL for an iframe player.
   def player_url(params={})
-    url = "https://www.youtube.com/embed/#{self.config['video_id']}"
+    url = VIDEO_VENDORS[self.config['video_vendor'].to_sym][:url] + self.config['video_id']
     if self.config['allow_flash'] == '0'
       params['html5'] = 1
     end
@@ -85,16 +128,32 @@ class RemoteVideo < Content
     end
   end
 
+  def video_vendor_supported
+    if config['video_vendor'].empty? || !VIDEO_VENDORS.collect { |a,b| b[:id] }.include?(config['video_vendor'])
+      errors.add(:video_vendor, 'must be ' + VIDEO_VENDORS.collect { |a,b| b[:id] }.join(" or "))
+    end
+  end
+
   def render_details
-    settings = {
-      :autoplay => 1,  # Autostart the video
-      :end => self.duration,  # Stop it around the duration
-      :controls => 0,  # Don't show any controls
-      :modestbranding => 1,  # Use the less fancy branding
-      :rel => 0,  # Don't show related videos
-      :showinfo => 0,  # Don't show the video info
-      :iv_load_policy => 3  # Don't show any of those in-video labels
-    }
+    if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
+      settings = {
+        :autoplay => 1,  # Autostart the video
+        :end => self.duration,  # Stop it around the duration
+        :controls => 0,  # Don't show any controls
+        :modestbranding => 1,  # Use the less fancy branding
+        :rel => 0,  # Don't show related videos
+        :showinfo => 0,  # Don't show the video info
+        :iv_load_policy => 3  # Don't show any of those in-video labels
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
+      settings = {
+        :api => 1,  # use Javascript API
+        :player_id => 'playerv', #arbitrary id of iframe 
+        :byline => 0,
+        :portrait => 0,
+        :autoplay => 1
+      }
+    end
     {:path => player_url(settings)}
   end
 end
