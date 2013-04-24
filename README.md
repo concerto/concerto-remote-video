@@ -7,5 +7,6 @@ This plugin provides support to play remotely hosted videos, like YouTube videos
 
 ## Supported hosts:
 * YouTube
+* Vimeo
 
 Concerto 2 Remove Video is licensed under the Apache License, Version 2.0.
