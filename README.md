@@ -5,6 +5,8 @@ This plugin provides support to play remotely hosted videos, like YouTube videos
 2.  ```bundle install```
 3.  ```./script/rails generate concerto_remote_video:install install```
 
+The last step produces a lot of output, if it runs successfully, because it recompiles the frontend js files.
+
 ## Supported hosts:
 * YouTube
 * Vimeo
