@@ -9,6 +9,7 @@ module ConcertoRemoteVideo
     def install
      copy_js
      register
+     recompile
     end
 
   private
@@ -19,5 +20,12 @@ module ConcertoRemoteVideo
     def register
       append_file 'public/frontend_js/content_types.js', "goog.require('concerto.frontend.Content.RemoteVideo');\n"
     end
+
+    def recompile
+      inside 'public/frontend_js' do 
+        run('/bin/bash compile.sh', {:verbose => true})
+      end
+    end
+
   end
 end

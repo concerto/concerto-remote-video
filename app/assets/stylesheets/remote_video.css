@@ -1,4 +1,3 @@
-// contents.css
 
 div.remote-video-info {
   padding: 1em;
@@ -10,4 +9,8 @@ div.remote-video-info img {
   max-height: 150px;
   margin: 0 5px 5px 0;
   border: solid 1px black;
+}
+
+div.video_id_hint {
+  font-style: italic;
 }

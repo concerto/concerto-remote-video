@@ -6,6 +6,19 @@ function attachHandlers() {
   $('input#remote_video_config_video_id').on('blur', getVideoInfo);
   $('select#remote_video_config_video_vendor').on('change', getVideoInfo);
 
+  $('select#remote_video_config_video_vendor').on('change', updateTooltip);
+
+  function updateTooltip() {
+    var vendor = $('select#remote_video_config_video_vendor').val();
+    if (vendor == 'YouTube') {
+      $('input#remote_video_config_video_id').attr("placeholder", "DGbqvYbPZBY");
+      $('div#video_hint_id').html('Specify the video id or keywords');
+    } else if (vendor == 'Vimeo') {
+      $('input#remote_video_config_video_id').attr("placeholder", "4224811");
+      $('div#video_hint_id').html('Specify the exact vimeo video id');
+    }
+  }
+
   function getVideoInfo() {
     // need to know which vendor
     // will place title, description, duration into 'div.remote-video-info'
