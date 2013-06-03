@@ -36,7 +36,7 @@ function attachHandlers() {
           $(info_el).empty().html('searching...');
           // todo: dont search if video_id is empty
           $.ajax({
-            url: 'http://gdata.youtube.com/feeds/api/videos?q='+ encodeURIComponent(video_id) +'&v=2&max-results=1&format=5&alt=jsonc',
+            url: '//gdata.youtube.com/feeds/api/videos?q='+ encodeURIComponent(video_id) +'&v=2&max-results=1&format=5&alt=jsonc',
             dataType: 'jsonp',
             timeout: 4000,
             success: function (data) {
@@ -55,7 +55,7 @@ function attachHandlers() {
         } else if (vendor == 'Vimeo') {
           $(info_el).empty().html('searching...');
           $.ajax({
-            url: 'http://vimeo.com/api/v2/video/' + encodeURIComponent(video_id) + '.json',
+            url: '//vimeo.com/api/v2/video/' + encodeURIComponent(video_id) + '.json',
             dataType: 'jsonp',
             timeout: 4000,
             success: function (data) {
