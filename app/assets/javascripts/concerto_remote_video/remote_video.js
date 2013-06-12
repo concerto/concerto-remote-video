@@ -33,7 +33,7 @@ function attachHandlers() {
       if (typeof vendor != 'undefined') {
         // we found the vendor selection, call appropriate api
         if (vendor == 'YouTube') {
-          $(info_el).empty().html('searching...');
+          $(info_el).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
           // todo: dont search if video_id is empty
           $.ajax({
             url: '//gdata.youtube.com/feeds/api/videos?q='+ encodeURIComponent(video_id) +'&v=2&max-results=1&format=5&alt=jsonc',
@@ -53,7 +53,7 @@ function attachHandlers() {
             }
           });
         } else if (vendor == 'Vimeo') {
-          $(info_el).empty().html('searching...');
+          $(info_el).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
           $.ajax({
             url: '//vimeo.com/api/v2/video/' + encodeURIComponent(video_id) + '.json',
             dataType: 'jsonp',
