@@ -1,4 +1,7 @@
-<div style="width: 100%; height: 100%; text-align: center;">
+<%= stylesheet_link_tag "concerto_remote_video/application" %>
+<div class="auto-resizable-iframe">
+<div>
   <% player_settings = {:end => content.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3} %>
-  <iframe id="player" type="text/html" width="100%" height="100%" src="<%=raw content.player_url(player_settings) %>" frameborder="0"></iframe>
+  <iframe id="player" type="text/html" src="<%=raw content.player_url(player_settings) %>" frameborder="0"></iframe>
+</div>
 </div>
