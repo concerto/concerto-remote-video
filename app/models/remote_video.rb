@@ -72,6 +72,7 @@ class RemoteVideo < Content
         self.config['video_id'] = ''
         return
       end
+      return if data['data'].nil? || data['data']['items'].nil?
       video_data = data['data']['items'][0]
       self.config['video_id'] = video_data['id']
       self.duration = video_data['duration'].to_i
