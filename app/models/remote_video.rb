@@ -1,7 +1,9 @@
 class RemoteVideo < Content
-  after_initialize :set_kind, :create_config, :load_info
+  after_initialize :set_kind, :create_config#, :load_info
 
   after_find :load_config
+
+  before_validation :load_info
   before_validation :save_config
 
   validate :video_id_must_exist
@@ -55,20 +57,26 @@ class RemoteVideo < Content
   def load_info
     # dont abort if there is a duration specified
     return if self.config['video_id'].nil? #|| !self.duration.nil?
+    return if !self.new_record?
+
     require 'net/http'
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
-      #begin
+      begin
         video_id = URI.escape(self.config['video_id'])
         url = "http://gdata.youtube.com/feeds/api/videos?q=#{video_id}&v=2&max-results=1&format=5&alt=jsonc"
         json = Net::HTTP.get_response(URI.parse(url)).body
         data = ActiveSupport::JSON.decode(json)
-      #rescue
-      #  Rails.logger.debug("YouTube not reachable @ #{url}.")
-      #  config['video_id'] = ''
-      #  return
-      #end
+      rescue MultiJson::ParseError => e
+        Rails.logger.error("Could not parse results from YouTube @ #{url}: #{e.message}: #{json}")
+        errors.add(:video_id, "Could not parse results from YouTube")
+        return
+      rescue
+        Rails.logger.error("YouTube not reachable @ #{url}.")
+        errors.add(:video_id, "Could not get information about video from YouTube")
+        return
+      end
       if data['data']['totalItems'].to_i <= 0
-        Rails.logger.debug('No video found from ' + url)
+        Rails.logger.error('No video found from ' + url)
         self.config['video_id'] = ''
         return
       end
@@ -80,10 +88,8 @@ class RemoteVideo < Content
       self.config['title'] = video_data['title']
       self.config['description'] = video_data['description']
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
-      #todo: put these info urls in the VV constant
-      #http://vimeo.com/api/v2/video/video_id.json
       data=[]
-      #begin
+      begin
         video_id = URI.escape(self.config['video_id'])
         url = "http://vimeo.com/api/v2/video/#{video_id}.json"
         uri = URI.parse(url)
@@ -94,11 +100,11 @@ class RemoteVideo < Content
           json = response.body
           data = ActiveSupport::JSON.decode(json)
         end
-      #rescue
-      #  Rails.logger.debug("YouTube not reachable @ #{url}.")
-      #  config['video_id'] = ''
-      #  return
-      #end
+      rescue => e
+        Rails.logger.error("Could not get information about video from Vimeo @ #{url}: #{e.message}")
+        config['video_id'] = ''
+        return
+      end
       if data.empty?
         Rails.logger.debug('No video found from ' + url)
         self.config['video_id'] = ''
