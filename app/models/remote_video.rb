@@ -110,6 +110,10 @@ class RemoteVideo < Content
       self.config['thumb_url'] = video_data['thumbnail_small']
       self.config['title'] = video_data['title']
       self.config['description'] = video_data['description']
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      self.config['thumb_url'] = ''
+      self.config['title'] = ''
+      self.config['description'] = ''
     end
   end
 
@@ -138,21 +142,27 @@ class RemoteVideo < Content
   def render_details
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
       settings = {
-        :autoplay => 1,  # Autostart the video
+        :autoplay => 1,         # Autostart the video
         :end => self.duration,  # Stop it around the duration
-        :controls => 0,  # Don't show any controls
-        :modestbranding => 1,  # Use the less fancy branding
-        :rel => 0,  # Don't show related videos
-        :showinfo => 0,  # Don't show the video info
-        :iv_load_policy => 3  # Don't show any of those in-video labels
+        :controls => 0,         # Don't show any controls
+        :modestbranding => 1,   # Use the less fancy branding
+        :rel => 0,              # Don't show related videos
+        :showinfo => 0,         # Don't show the video info
+        :iv_load_policy => 3    # Don't show any of those in-video labels
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
       settings = {
-        :api => 1,  # use Javascript API
+        :api => 1,              # use Javascript API
         :player_id => 'playerv', #arbitrary id of iframe 
         :byline => 0,
         :portrait => 0,
         :autoplay => 1
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      settings = { 
+        :autoplay => 1,         # Autostart the video
+        :end => self.duration,  # Stop it around the duration
+        :controls => 0,         # Don't show any controls
       }
     end
     {:path => player_url(settings)}
