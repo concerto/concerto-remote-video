@@ -9,12 +9,3 @@
 
   <%= render :partial => 'contents/form_elements/dates', :locals => {:form => form} %>
 </fieldset>
-
-<fieldset>
-  <legend><span><%=t('contents.select_feed')%></span></legend>
-  <div class="clearfix">
-    <% if @content.new_record? %>
-      <%= render :partial => 'contents/form_elements/feeds' %>
-    <% end %>
-  </div>
-</fieldset>

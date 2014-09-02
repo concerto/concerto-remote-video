@@ -1,11 +1,7 @@
 # Concerto 2 Remote Video Plugin
 This plugin provides support to play remotely hosted videos, like YouTube videos, in Concerto 2.
 
-1.  Add to your Gemfile: ```gem 'concerto_remote_video'```
-2.  ```bundle install```
-3.  ```./script/rails generate concerto_remote_video:install install```
-
-The last step produces a lot of output, if it runs successfully, because it recompiles the frontend js files.
+To install this plugin, go to the Plugin management page in concerto, select RubyGems as the source and "concerto_remote_video" as the gem name.
 
 ## Supported hosts:
 * YouTube
