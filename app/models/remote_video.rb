@@ -15,7 +15,7 @@ class RemoteVideo < Content
   VIDEO_VENDORS = {
     :YouTube => { :id => "YouTube", :url => "https://www.youtube.com/embed/" },
     :Vimeo => { :id => "Vimeo", :url => "https://player.vimeo.com/video/" },
-    :HTTPVideo => { :id => "HTTP Video Source", :url => ""}
+    :HTTPVideo => { :id => "HTTPVideo", :url => ""}
   }
 
   attr_accessor :config
@@ -119,7 +119,7 @@ class RemoteVideo < Content
       self.config['description'] = video_data['description']
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
       self.config['thumb_url'] = ''
-      self.config['title'] = ''
+      self.config['title'] = self.name
       self.config['description'] = ''
     end
   end
@@ -144,6 +144,33 @@ class RemoteVideo < Content
     if config['video_vendor'].empty? || !VIDEO_VENDORS.collect { |a,b| b[:id] }.include?(config['video_vendor'])
       errors.add(:video_vendor, 'must be ' + VIDEO_VENDORS.collect { |a,b| b[:id] }.join(" or "))
     end
+  end
+
+  def self.preview(data)
+    begin
+      o = RemoteVideo.new()
+      o.config['video_id'] = data[:video_id]
+      o.config['video_vendor'] = data[:video_vendor]
+      o.config['allow_flash'] = data[:allow_flash]
+      o.name = data[:name]
+      o.duration = data[:duration]
+
+      results = o.render_preview
+    rescue => e
+      results = "Unable to preview.  #{e.message}"
+    end
+
+    return results
+  end
+
+  def preview
+    begin
+      results = render_preview
+    rescue => e
+      results = "Unable to preview.  #{e.message}"
+    end
+
+    return results
   end
 
   def render_details
@@ -173,5 +200,16 @@ class RemoteVideo < Content
       }
     end
     {:path => player_url(settings)}
+  end
+
+  def render_preview
+    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
+      player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
+      results = "<iframe id=\"player\" type=\"text/html\" width=\"100%\" src=\"#{self.player_url(player_settings)}\" frameborder=\"0\"></iframe>"
+    elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
+      results = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
+    end
+
+    results
   end
 end

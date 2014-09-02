@@ -1,14 +1,7 @@
 <%= stylesheet_link_tag "concerto_remote_video/application" %>
 <div class="auto-resizable-iframe">
-<div>
-  <% if content.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || content.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id] %>
-    <% player_settings = {:end => content.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3} %>
-    <iframe id="player" type="text/html" src="<%=raw content.player_url(player_settings) %>" frameborder="0"></iframe>
-  <% elsif content.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id] %>
-    <video id="movie" preload autoplay>
-      <source src="<%=content.config['video_id']%>" />
-    </video>
-  <% end %>
-</div>
+  <div>
+    <%= content.preview.html_safe %>
+  </div>
 </div>
 
