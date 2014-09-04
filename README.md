@@ -3,7 +3,8 @@ This plugin provides support to play remotely hosted videos, like YouTube videos
 
 To install this plugin, go to the Plugin management page in concerto, select RubyGems as the source and "concerto_remote_video" as the gem name.
 
-## Supported hosts:
+## Supported sources:
+* HTTP - MP4 videos primarily (http://en.wikipedia.org/wiki/HTML5_video#Supported_video_formats)
 * YouTube
 * Vimeo
 

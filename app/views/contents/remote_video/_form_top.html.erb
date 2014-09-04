@@ -7,16 +7,16 @@
   <%= form.fields_for :config do |config| %>
 <div class='span4'>
     <div class="clearfix">
-      <%= config.label :video_vendor, 'Video Vendor' %>
+      <%= config.label :video_vendor, 'Video Source' %>
       <div class="input">
-        <%= config.select :video_vendor, RemoteVideo::VIDEO_VENDORS.collect { |a,b| b[:id] } %>
+        <%= config.select :video_vendor, RemoteVideo::VIDEO_VENDORS.collect { |a,b| [b[:name], b[:id]] } %>
       </div>
     </div>
     <div class="clearfix">
       <%= config.label :video_id %>
       <div class="input">
-        <%= config.text_field :video_id, :placeholder => "DGbqvYbPZBY", :class => "input-xlarge", "data-url" => preview_contents_path %>
-        <div id="video_id_hint">Specify the video id or keywords</div>
+        <%= config.text_field :video_id, :placeholder => "http://media.w3.org/2010/05/sintel/trailer.mp4", :class => "input-xlarge", "data-url" => preview_contents_path %>
+        <div id="video_id_hint">Specify the url of the video</div>
       </div>
     </div>
     <div class="clearfix">
@@ -29,7 +29,7 @@
       <%= form.label :duration %>
       <div class="input">
           <%= form.number_field :duration, :class => "input-small" %><br/>
-          (automatically set if ascertained from video source)
+          (auto-set if read from video source)
       </div>
     </div>
 </div>

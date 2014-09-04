@@ -13,9 +13,9 @@ class RemoteVideo < Content
 
   DISPLAY_NAME = 'Video'
   VIDEO_VENDORS = {
-    :YouTube => { :id => "YouTube", :url => "https://www.youtube.com/embed/" },
-    :Vimeo => { :id => "Vimeo", :url => "https://player.vimeo.com/video/" },
-    :HTTPVideo => { :id => "HTTPVideo", :url => ""}
+     :HTTPVideo => { :id => "HTTPVideo", :name => "Video URL", :url => ""},
+    :YouTube => { :id => "YouTube", :name => "YouTube", :url => "https://www.youtube.com/embed/" },
+    :Vimeo => { :id => "Vimeo", :name => "Vimeo", :url => "https://player.vimeo.com/video/" }
   }
 
   attr_accessor :config
