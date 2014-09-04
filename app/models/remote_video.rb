@@ -14,7 +14,8 @@ class RemoteVideo < Content
   DISPLAY_NAME = 'Video'
   VIDEO_VENDORS = {
     :YouTube => { :id => "YouTube", :url => "https://www.youtube.com/embed/" },
-    :Vimeo => { :id => "Vimeo", :url => "https://player.vimeo.com/video/" }
+    :Vimeo => { :id => "Vimeo", :url => "https://player.vimeo.com/video/" },
+    :HTTPVideo => { :id => "HTTPVideo", :url => ""}
   }
 
   attr_accessor :config
@@ -116,6 +117,10 @@ class RemoteVideo < Content
       self.config['thumb_url'] = video_data['thumbnail_small']
       self.config['title'] = video_data['title']
       self.config['description'] = video_data['description']
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      self.config['thumb_url'] = ''
+      self.config['title'] = self.name
+      self.config['description'] = ''
     end
   end
 
@@ -141,26 +146,70 @@ class RemoteVideo < Content
     end
   end
 
+  def self.preview(data)
+    begin
+      o = RemoteVideo.new()
+      o.config['video_id'] = data[:video_id]
+      o.config['video_vendor'] = data[:video_vendor]
+      o.config['allow_flash'] = data[:allow_flash]
+      o.name = data[:name]
+      o.duration = data[:duration]
+
+      results = o.render_preview
+    rescue => e
+      results = "Unable to preview.  #{e.message}"
+    end
+
+    return results
+  end
+
+  def preview
+    begin
+      results = render_preview
+    rescue => e
+      results = "Unable to preview.  #{e.message}"
+    end
+
+    return results
+  end
+
   def render_details
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
       settings = {
-        :autoplay => 1,  # Autostart the video
+        :autoplay => 1,         # Autostart the video
         :end => self.duration,  # Stop it around the duration
-        :controls => 0,  # Don't show any controls
-        :modestbranding => 1,  # Use the less fancy branding
-        :rel => 0,  # Don't show related videos
-        :showinfo => 0,  # Don't show the video info
-        :iv_load_policy => 3  # Don't show any of those in-video labels
+        :controls => 0,         # Don't show any controls
+        :modestbranding => 1,   # Use the less fancy branding
+        :rel => 0,              # Don't show related videos
+        :showinfo => 0,         # Don't show the video info
+        :iv_load_policy => 3    # Don't show any of those in-video labels
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
       settings = {
-        :api => 1,  # use Javascript API
+        :api => 1,              # use Javascript API
         :player_id => 'playerv', #arbitrary id of iframe 
         :byline => 0,
         :portrait => 0,
         :autoplay => 1
       }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      settings = { 
+        :autoplay => 1,         # Autostart the video
+        :end => self.duration,  # Stop it around the duration
+        :controls => 0,         # Don't show any controls
+      }
     end
     {:path => player_url(settings)}
+  end
+
+  def render_preview
+    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
+      player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
+      results = "<iframe id=\"player\" type=\"text/html\" width=\"100%\" src=\"#{self.player_url(player_settings)}\" frameborder=\"0\"></iframe>"
+    elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
+      results = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
+    end
+
+    results
   end
 end

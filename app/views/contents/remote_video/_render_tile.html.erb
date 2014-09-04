@@ -1,1 +1,12 @@
-<div class="pop" style="background-image:url(<%= content.config['thumb_url'] %>); background-size: cover; width: 100%; height: 100%;" data-content="<%= content.config['description']%>" data-title="<%= content.config['title']%>"></div>
+<% if content.config['thumb_url'].blank? %>
+  <div>
+    <h2 class="center">
+      <%= content.name %>
+    </h2>
+    <p>
+      <%= content.config['video_id'] %>
+    </p>
+  </div>
+<% else %>
+  <div class="pop" style="background-image:url(<%= content.config['thumb_url'] %>); background-size: cover; width: 100%; height: 100%;" data-content="<%= content.config['description']%>" data-title="<%= content.config['title']%>"></div>
+<% end %>
