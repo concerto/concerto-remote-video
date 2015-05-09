@@ -4,27 +4,45 @@ function initializeRemoteVideoHandlers() {
 
     function getVideoPreview() {
       var preview_url = '/concerto-remote-video/preview';
-      var preview_div = $('#preview_div');
+
+      // Form video details
       var video_id = $('input#remote_video_config_video_id').val();
       var video_vendor = $('select#remote_video_config_video_vendor').val();
 
       if (preview_div.length != 0) {
+        // Loading icon
         $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
+        // Video preview request
         $.ajax({
           type: 'POST',
-          url: preview_url, 
+          url: preview_url,
           data: { 
             video_id: video_id,
             video_vendor: video_vendor,
           },
           success: function(data) {
-            $(preview_div).empty().html(data['preview']);
+            loadVideoInfo(data);
+            loadVideoPreview(data);
           }, 
           error: function(data) {
-            $(preview_div).empty().html(data['preview']);
+            loadVideoInfo(data);
+            loadVideoPreview(data);
           }
         });
       }
+    }
+
+    function loadVideoInfo(data) {
+      var info_el = $('.remote-video-info');
+      if (data != undefined) {
+        var info = '<img src="' + data['thumb_url'] + '"/><h4>' + data['title'] + '</h4><i>' + data['duration'] + ' secs</i><br/><p>' + data['description'] + '</p>';
+        $(info_el).empty().html(info);
+      }
+    }
+
+    function loadVideoPreview(data) {
+      var preview_el = $('#preview_div');
+      $(preview_div).empty().html(data['preview_code']);
     }
 
     function updateTooltip() {

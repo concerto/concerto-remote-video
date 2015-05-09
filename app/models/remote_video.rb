@@ -67,15 +67,20 @@ class RemoteVideo < Content
       video = VideoInfo.new("http://vimeo.com/#{URI.escape(self.config['video_id'])}")
     end
     if video.available?
-      self.config['video_id'] = video.video_id
       self.duration = video.duration
-      self.config['thumb_url'] = video.thumbnail_large
       self.config['title'] = video.title
       self.config['description'] = video.description
+      self.config['video_id'] = video.video_id
+      self.config['duration'] = video.duration
+      self.config['thumb_url'] = video.thumbnail_large
+      self.config['preview_url'] = video.embed_url
+      self.config['preview_code'] = video.embed_code
     end
   end
 
   def self.preview(data)
+    require 'video_info'
+
     begin
       o = RemoteVideo.new()
       o.config['video_id'] = data[:video_id]
@@ -83,13 +88,13 @@ class RemoteVideo < Content
       o.config['allow_flash'] = data[:allow_flash]
       o.name = data[:name]
       o.duration = data[:duration]
+      o.load_info
 
-      results = o.render_preview
     rescue => e
-      results = "Unable to preview.  #{e.message}"
+      return "Unable to preview.  #{e.message}"
     end
 
-    return results
+    return o.config
   end
 
   def preview
@@ -151,16 +156,5 @@ class RemoteVideo < Content
       }
     end
     {:path => player_url(settings)}
-  end
-
-  def render_preview
-    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
-      player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
-      results = "<iframe id=\"player\" type=\"text/html\" width=\"100%\" src=\"#{self.player_url(player_settings)}\" frameborder=\"0\"></iframe>"
-    elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
-      results = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
-    end
-
-    results
   end
 end
