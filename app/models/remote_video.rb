@@ -13,7 +13,7 @@ class RemoteVideo < Content
 
   DISPLAY_NAME = 'Video'
   VIDEO_VENDORS = {
-     :HTTPVideo => { :id => "HTTPVideo", :name => "Video URL", :url => ""},
+    :HTTPVideo => { :id => "HTTPVideo", :name => "Video URL", :url => ""},
     :YouTube => { :id => "YouTube", :name => "YouTube", :url => "https://www.youtube.com/embed/" },
     :Vimeo => { :id => "Vimeo", :name => "Vimeo", :url => "https://player.vimeo.com/video/" }
   }
@@ -56,93 +56,22 @@ class RemoteVideo < Content
 
   # Load some info about this video from YouTube.
   def load_info
+    require 'video_info'
+
     # dont abort if there is a duration specified
     return if self.config['video_id'].nil? #|| !self.duration.nil?
     return if !self.new_record?
-
-    require 'net/http'
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
-      begin
-        video_id = URI.escape(self.config['video_id'])
-        url = "http://gdata.youtube.com/feeds/api/videos?q=#{video_id}&v=2&max-results=1&format=5&alt=jsonc"
-        json = Net::HTTP.get_response(URI.parse(url)).body
-        data = ActiveSupport::JSON.decode(json)
-      rescue MultiJson::ParseError => e
-        Rails.logger.error("Could not parse results from YouTube @ #{url}: #{e.message}: #{json}")
-        errors.add(:video_id, "Could not parse results from YouTube")
-        return
-      rescue
-        Rails.logger.error("YouTube not reachable @ #{url}.")
-        errors.add(:video_id, "Could not get information about video from YouTube")
-        return
-      end
-      if data['data']['totalItems'].to_i <= 0
-        Rails.logger.error('No video found from ' + url)
-        self.config['video_id'] = ''
-        return
-      end
-      return if data['data'].nil? || data['data']['items'].nil?
-      video_data = data['data']['items'][0]
-      self.config['video_id'] = video_data['id']
-      self.duration = video_data['duration'].to_i
-      self.config['thumb_url'] = video_data['thumbnail']['hqDefault']
-      self.config['title'] = video_data['title']
-      self.config['description'] = video_data['description']
+      video = VideoInfo.new("http://www.youtube.com/watch?v=#{URI.escape(self.config['video_id'])}")
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
-      data=[]
-      begin
-        video_id = URI.escape(self.config['video_id'])
-        url = "http://vimeo.com/api/v2/video/#{video_id}.json"
-        uri = URI.parse(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        request = Net::HTTP::Get.new(uri.request_uri)
-        response = http.request(request)
-        if response.code == '200'  #ok
-          json = response.body
-          data = ActiveSupport::JSON.decode(json)
-        end
-      rescue => e
-        Rails.logger.error("Could not get information about video from Vimeo @ #{url}: #{e.message}")
-        config['video_id'] = ''
-        return
-      end
-      if data.empty?
-        Rails.logger.debug('No video found from ' + url)
-        self.config['video_id'] = ''
-        return
-      end
-      video_data = data[0]
-      # some vimeo videos have zero for their duration, so in that case use what the user supplied
-      self.duration = (video_data['duration'].to_i > 0 ? video_data['duration'].to_i : self.duration.to_i)
-      self.config['thumb_url'] = video_data['thumbnail_small']
-      self.config['title'] = video_data['title']
-      self.config['description'] = video_data['description']
-    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
-      self.config['thumb_url'] = ''
-      self.config['title'] = self.name
-      self.config['description'] = ''
+      video = VideoInfo.new("http://vimeo.com/#{URI.escape(self.config['video_id'])}")
     end
-  end
-
-  # Build a URL for an iframe player.
-  def player_url(params={})
-    url = VIDEO_VENDORS[self.config['video_vendor'].to_sym][:url] + self.config['video_id']
-    if self.config['allow_flash'] == '0'
-      params['html5'] = 1
-    end
-    url += '?' + URI.escape(params.collect{|k,v| "#{k}=#{v}"}.join('&'))
-    return url
-  end
-
-  def video_id_must_exist
-    if config['video_id'].empty?
-      errors.add(:video_id, 'could not be found')
-    end
-  end
-
-  def video_vendor_supported
-    if config['video_vendor'].empty? || !VIDEO_VENDORS.collect { |a,b| b[:id] }.include?(config['video_vendor'])
-      errors.add(:video_vendor, 'must be ' + VIDEO_VENDORS.collect { |a,b| b[:id] }.join(" or "))
+    if video.available?
+      self.config['video_id'] = video.video_id
+      self.duration = video.duration
+      self.config['thumb_url'] = video.thumbnail_large
+      self.config['title'] = video.title
+      self.config['description'] = video.description
     end
   end
 
@@ -171,6 +100,28 @@ class RemoteVideo < Content
     end
 
     return results
+  end
+
+  # Build a URL for an iframe player.
+  def player_url(params={})
+    url = VIDEO_VENDORS[self.config['video_vendor'].to_sym][:url] + self.config['video_id']
+    if self.config['allow_flash'] == '0'
+      params['html5'] = 1
+    end
+    url += '?' + URI.escape(params.collect{|k,v| "#{k}=#{v}"}.join('&'))
+    return url
+  end
+
+  def video_id_must_exist
+    if config['video_id'].empty?
+      errors.add(:video_id, 'could not be found')
+    end
+  end
+
+  def video_vendor_supported
+    if config['video_vendor'].empty? || !VIDEO_VENDORS.collect { |a,b| b[:id] }.include?(config['video_vendor'])
+      errors.add(:video_vendor, 'must be ' + VIDEO_VENDORS.collect { |a,b| b[:id] }.join(" or "))
+    end
   end
 
   def render_details
