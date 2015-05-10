@@ -8,6 +8,9 @@ function initializeRemoteVideoHandlers() {
       // Form video details
       var video_id = $('input#remote_video_config_video_id').val();
       var video_vendor = $('select#remote_video_config_video_vendor').val();
+      var allow_flash = $('input#remote_video_config_allow_flash').val();
+      var name = $('input#remote_video_name').val();
+      var duration = $('input#remote_video_duration').val();
 
       // Loading icon
       $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
@@ -19,6 +22,9 @@ function initializeRemoteVideoHandlers() {
         data: { 
           video_id: video_id,
           video_vendor: video_vendor,
+          allow_flash: allow_flash,
+          name: name,
+          duration: duration
         },
         success: function(data) {
           loadVideoInfo(data);
@@ -33,7 +39,6 @@ function initializeRemoteVideoHandlers() {
     function loadVideoInfo(data) {
       var info_el = $('.remote-video-info');
 
-      // Select thumbnail based on provider
       if (data['video_vendor'] == "HTTPVideo") {
         $(info_el).empty();
         return;
