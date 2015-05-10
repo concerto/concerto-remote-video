@@ -28,7 +28,7 @@ function initializeRemoteVideoHandlers() {
         },
         success: function(data) {
           loadVideoInfo(data);
-          loadVideoPreview(data);
+          loadVideoPreview(data); 
         },
         error: function(e) {
           loadVideoPreview(undefined);
@@ -38,16 +38,19 @@ function initializeRemoteVideoHandlers() {
 
     function loadVideoInfo(data) {
       var info_el = $('.remote-video-info');
+      var name_el = $('input#remote_video_name');
+      var title = '';
 
       if (data['video_vendor'] == "HTTPVideo") {
         $(info_el).empty();
         return;
       }
       else if (data['video_vendor'] == "YouTube") {
-        var description = '<p></p>'
+        var description = '<p></p>';
       }
       else if (data['video_vendor'] == "Vimeo") {
         var description = '<p>' + data['description'] + '</p>';
+        name_el.val(data['title']);
       } 
 
       // Load video info 
@@ -60,7 +63,7 @@ function initializeRemoteVideoHandlers() {
       if (data != undefined) {
         $(preview_div).empty().html(data['preview_code']);
       } else {
-        $(preview_div).empty().html("<p>Unable to generate preview.</p>");
+        $(preview_div).empty();
       }
     }
 
