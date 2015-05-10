@@ -65,16 +65,25 @@ class RemoteVideo < Content
       video = VideoInfo.new("http://www.youtube.com/watch?v=#{URI.escape(self.config['video_id'])}")
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
       video = VideoInfo.new("http://vimeo.com/#{URI.escape(self.config['video_id'])}")
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      self.config['preview_code'] = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
     end
-    if video.available?
-      self.duration = video.duration
+      
+    if !video.nil? and video.available?
+      # some vimeo videos have zero for their duration, so in that case use what the user supplied
+      self.duration = (video.duration.to_i > 0 ? video.duration.to_i : self.duration.to_i)
       self.config['title'] = video.title
       self.config['description'] = video.description
       self.config['video_id'] = video.video_id
       self.config['duration'] = video.duration
-      self.config['thumb_url'] = video.thumbnail_large
       self.config['preview_url'] = video.embed_url
       self.config['preview_code'] = video.embed_code
+      # set video thumbnail using video info or using YouTube image url to bypass API restrictions 
+      if video.provider == VIDEO_VENDORS[:YouTube][:id]
+        self.config['thumb_url'] = "https://i.ytimg.com/vi/" + video.video_id + "/hqdefault.jpg"
+      else
+        self.config['thumb_url'] = video.thumbnail_large
+      end
     end
   end
 
@@ -156,5 +165,16 @@ class RemoteVideo < Content
       }
     end
     {:path => player_url(settings)}
+  end
+
+  def render_preview
+    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
+      player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
+      results = self.config['preview_code']
+    elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
+      results = self.config['preview_code']
+    end
+
+    results
   end
 end

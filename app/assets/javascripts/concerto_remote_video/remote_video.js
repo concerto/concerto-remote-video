@@ -9,40 +9,54 @@ function initializeRemoteVideoHandlers() {
       var video_id = $('input#remote_video_config_video_id').val();
       var video_vendor = $('select#remote_video_config_video_vendor').val();
 
-      if (preview_div.length != 0) {
-        // Loading icon
-        $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
-        // Video preview request
-        $.ajax({
-          type: 'POST',
-          url: preview_url,
-          data: { 
-            video_id: video_id,
-            video_vendor: video_vendor,
-          },
-          success: function(data) {
-            loadVideoInfo(data);
-            loadVideoPreview(data);
-          }, 
-          error: function(data) {
-            loadVideoInfo(data);
-            loadVideoPreview(data);
-          }
-        });
-      }
+      // Loading icon
+      $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
+      $('.remote-video-info').empty();
+      // Video preview request
+      $.ajax({
+        type: 'POST',
+        url: preview_url,
+        data: { 
+          video_id: video_id,
+          video_vendor: video_vendor,
+        },
+        success: function(data) {
+          loadVideoInfo(data);
+          loadVideoPreview(data);
+        },
+        error: function(e) {
+          loadVideoPreview(undefined);
+        }
+      });
     }
 
     function loadVideoInfo(data) {
       var info_el = $('.remote-video-info');
-      if (data != undefined) {
-        var info = '<img src="' + data['thumb_url'] + '"/><h4>' + data['title'] + '</h4><i>' + data['duration'] + ' secs</i><br/><p>' + data['description'] + '</p>';
-        $(info_el).empty().html(info);
+
+      // Select thumbnail based on provider
+      if (data['video_vendor'] == "HTTPVideo") {
+        $(info_el).empty();
+        return;
       }
+      else if (data['video_vendor'] == "YouTube") {
+        var description = '<p></p>'
+      }
+      else if (data['video_vendor'] == "Vimeo") {
+        var description = '<p>' + data['description'] + '</p>';
+      } 
+
+      // Load video info 
+      var info = '<img src="'+data['thumb_url']+'"/></h4><i>' + data['duration'] + ' secs</i><br/>' + description; 
+      $(info_el).empty().html(info);
     }
 
     function loadVideoPreview(data) {
       var preview_el = $('#preview_div');
-      $(preview_div).empty().html(data['preview_code']);
+      if (data != undefined) {
+        $(preview_div).empty().html(data['preview_code']);
+      } else {
+        $(preview_div).empty().html("<p>Unable to generate preview.</p>");
+      }
     }
 
     function updateTooltip() {
