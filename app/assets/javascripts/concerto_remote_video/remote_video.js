@@ -8,32 +8,28 @@ function initializeRemoteVideoHandlers() {
       // Form video details
       var video_id = $('input#remote_video_config_video_id').val();
       var video_vendor = $('select#remote_video_config_video_vendor').val();
-      var allow_flash = $('input#remote_video_config_allow_flash').val();
-      var name = $('input#remote_video_name').val();
-      var duration = $('input#remote_video_duration').val();
 
       // Loading icon
-      $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
-      $('.remote-video-info').empty();
-      // Video preview request
-      $.ajax({
-        type: 'POST',
-        url: preview_url,
-        data: { 
-          video_id: video_id,
-          video_vendor: video_vendor,
-          allow_flash: allow_flash,
-          name: name,
-          duration: duration
-        },
-        success: function(data) {
-          loadVideoInfo(data);
-          loadVideoPreview(data); 
-        },
-        error: function(e) {
-          loadVideoPreview(undefined);
-        }
-      });
+      if (video_id.length != 0) {
+        $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
+        $('.remote-video-info').empty();
+        // Video preview request
+        $.ajax({
+          type: 'POST',
+          url: preview_url,
+          data: { 
+            video_id: video_id,
+            video_vendor: video_vendor
+          },
+          success: function(data) {
+            loadVideoInfo(data);
+            loadVideoPreview(data); 
+          },
+          error: function(e) {
+            loadVideoPreview(undefined);
+          }
+        });
+      }
     }
 
     function loadVideoInfo(data) {
@@ -46,6 +42,7 @@ function initializeRemoteVideoHandlers() {
         return;
       }
       else if (data['video_vendor'] == "YouTube") {
+        // YouTube current needs an API key for description and title
         var description = '<p></p>';
       }
       else if (data['video_vendor'] == "Vimeo") {

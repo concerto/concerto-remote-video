@@ -94,9 +94,6 @@ class RemoteVideo < Content
       o = RemoteVideo.new()
       o.config['video_id'] = data[:video_id]
       o.config['video_vendor'] = data[:video_vendor]
-      o.config['allow_flash'] = data[:allow_flash]
-      o.name = data[:name]
-      o.duration = data[:duration]
       o.load_info
 
     rescue => e
