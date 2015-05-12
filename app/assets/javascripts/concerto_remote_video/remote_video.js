@@ -34,17 +34,20 @@ function initializeRemoteVideoHandlers() {
 
     function loadVideoInfo(data) {
       if (data['video_available']) {
+        // Target elements for setting video info
         var info_el = $('.remote-video-info');
         var name_el = $('input#remote_video_name');
+        var duration_el = $('input#remote_video_duration');
+        // Initialize info content
         var title = '';
         var description = '<p></p>';
+        var vendor = data['video_vendor'];
 
-        if (data['video_vendor'] == "HTTPVideo") {
+        if (vendor == 'HTTPVideo') {
           $(info_el).empty();
           return;
-        }
-        else {
-          if (data['description']) {
+        } else {
+          if (vendor != 'YouTube' && data['description']) {
             var description = '<p>' + data['description'] + '</p>';
           }
           name_el.val(data['title']);
@@ -53,6 +56,9 @@ function initializeRemoteVideoHandlers() {
         // Load video info 
         var info = '<img src="'+data['thumb_url']+'"/></h4><i>' + data['duration'] + ' secs</i><br/>' + description; 
         $(info_el).empty().html(info);
+
+        // Set content duration to video duration
+        duration_el.val(data['duration']);
       }
     }
 
@@ -67,15 +73,24 @@ function initializeRemoteVideoHandlers() {
 
     function updateTooltip() {
       var vendor = $('select#remote_video_config_video_vendor').val();
+      var hint_el = $('div#video_id_hint');
+      var id_el = $('input#remote_video_config_video_id');
+
       if (vendor == 'YouTube') {
-        $('input#remote_video_config_video_id').attr("placeholder", "DGbqvYbPZBY");
-        $('div#video_id_hint').html('Specify the video id or keywords');
+        id_el.attr('placeholder', 'DGbqvYbPZBY');
+        hint_el.html('Specify the exact YouTube video id');
       } else if (vendor == 'Vimeo') {
-        $('input#remote_video_config_video_id').attr("placeholder", "4224811");
-        $('div#video_id_hint').html('Specify the exact vimeo video id');
+        id_el.attr('placeholder', '4224811');
+        hint_el.html('Specify the exact vimeo video id');
       } else if (vendor == 'HTTPVideo') {
-        $('input#remote_video_config_video_id').attr("placeholder", "http://media.w3.org/2010/05/sintel/trailer.mp4");
-        $('div#video_id_hint').html('Specify the url of the video');
+        id_el.attr('placeholder', 'http://media.w3.org/2010/05/sintel/trailer.mp4');
+        hint_el.html('Specify the url of the video');
+      } else if (vendor == 'Wistia') {
+        id_el.attr('placeholder', 'g5pnf59ala');
+        hint_el.html('Specify the exact Wistia video id');
+      } else if (vendor == 'DailyMotion') {
+        id_el.attr('placeholder', 'x23shps');
+        hint_el.html('Specify the exact DailyMotion video id');
       }
     }
 
