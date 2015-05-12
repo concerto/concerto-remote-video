@@ -26,38 +26,39 @@ function initializeRemoteVideoHandlers() {
             loadVideoPreview(data); 
           },
           error: function(e) {
-            loadVideoPreview(undefined);
+            loadVideoPreview({video_available: false});
           }
         });
       }
     }
 
     function loadVideoInfo(data) {
-      var info_el = $('.remote-video-info');
-      var name_el = $('input#remote_video_name');
-      var title = '';
-
-      if (data['video_vendor'] == "HTTPVideo") {
-        $(info_el).empty();
-        return;
-      }
-      else if (data['video_vendor'] == "YouTube") {
-        // YouTube current needs an API key for description and title
+      if (data['video_available']) {
+        var info_el = $('.remote-video-info');
+        var name_el = $('input#remote_video_name');
+        var title = '';
         var description = '<p></p>';
-      }
-      else if (data['video_vendor'] == "Vimeo") {
-        var description = '<p>' + data['description'] + '</p>';
-        name_el.val(data['title']);
-      } 
 
-      // Load video info 
-      var info = '<img src="'+data['thumb_url']+'"/></h4><i>' + data['duration'] + ' secs</i><br/>' + description; 
-      $(info_el).empty().html(info);
+        if (data['video_vendor'] == "HTTPVideo") {
+          $(info_el).empty();
+          return;
+        }
+        else {
+          if (data['description']) {
+            var description = '<p>' + data['description'] + '</p>';
+          }
+          name_el.val(data['title']);
+        } 
+
+        // Load video info 
+        var info = '<img src="'+data['thumb_url']+'"/></h4><i>' + data['duration'] + ' secs</i><br/>' + description; 
+        $(info_el).empty().html(info);
+      }
     }
 
     function loadVideoPreview(data) {
       var preview_el = $('#preview_div');
-      if (data != undefined) {
+      if (data['video_available']) {
         $(preview_div).empty().html(data['preview_code']);
       } else {
         $(preview_div).empty();

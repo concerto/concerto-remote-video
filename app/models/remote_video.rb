@@ -72,9 +72,13 @@ class RemoteVideo < Content
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:DailyMotion][:id]
       video = VideoInfo.new("http://dailymotion.com/video/#{URI.escape(self.config['video_id'])}")
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
+      # self hosted video, skip video info gem configuration below 
       self.config['preview_code'] = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
+      self.config['video_available'] = true
+      return
     end
 
+    # Video info gem details
     if !video.nil? and video.available?
       # some vimeo videos have zero for their duration, so in that case use what the user supplied
       self.duration = (video.duration.to_i > 0 ? video.duration.to_i : self.duration.to_i)
@@ -91,6 +95,8 @@ class RemoteVideo < Content
         self.config['thumb_url'] = video.thumbnail_large
       end
     end
+    # Store video availablility to skip preview rendering
+    self.config['video_available'] = video.available?
   end
 
   def self.preview(data)
