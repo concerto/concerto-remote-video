@@ -41,24 +41,34 @@ function initializeRemoteVideoHandlers() {
         // Initialize info content
         var title = '';
         var description = '<p></p>';
+        var duration = '';
         var vendor = data['video_vendor'];
 
         if (vendor == 'HTTPVideo') {
           $(info_el).empty();
           return;
         } else {
-          if (vendor != 'YouTube' && data['description']) {
-            var description = '<p>' + data['description'] + '</p>';
+          // YouTube no longer returns these details without an API key
+          if (vendor != 'YouTube') {
+            if (data['description']) {
+              // Preview video description
+              var description = '<p>' + data['description'] + '</p>';
+            } 
+            if (data['title']) {
+              // Set content title to video returned title
+              name_el.val(data['title']);
+            }
+            if (data['duration']) {
+              // Set content duration to video duration
+              duration = '<i>' + data['duration'] + ' secs</i>';
+              duration_el.val(data['duration']);
+            }
           }
-          name_el.val(data['title']);
         } 
 
         // Load video info 
-        var info = '<img src="'+data['thumb_url']+'"/></h4><i>' + data['duration'] + ' secs</i><br/>' + description; 
+        var info = '<img src="'+data['thumb_url']+'"/></h4>'+duration+'<br/>'+description; 
         $(info_el).empty().html(info);
-
-        // Set content duration to video duration
-        duration_el.val(data['duration']);
       }
     }
 
