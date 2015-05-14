@@ -17,7 +17,7 @@ class RemoteVideo < Content
     :YouTube => { :id => "YouTube", :name => "YouTube", :url => "https://www.youtube.com/embed/" },
     :Vimeo => { :id => "Vimeo", :name => "Vimeo", :url => "https://player.vimeo.com/video/" },
     :Wistia => { :id => "Wistia", :name => "Wistia", :url => "https://fast.wistia.net/embed/iframe/" },
-    :DailyMotion => { :id => "DailyMotion", :name => "DailyMotion", :url => "https//www.dailymotion.com/embed/video/" }
+    :DailyMotion => { :id => "DailyMotion", :name => "DailyMotion", :url => "https://www.dailymotion.com/embed/video/" }
   }
 
   attr_accessor :config
@@ -160,11 +160,27 @@ class RemoteVideo < Content
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
       settings = {
-        :api => 1,              # use Javascript API
-        :player_id => 'playerv', #arbitrary id of iframe
-        :byline => 0,
-        :portrait => 0,
-        :autoplay => 1
+        :api => 1,                # use Javascript API
+        :player_id => 'playerv',  #arbitrary id of iframe
+        :byline => 0,             # Hide video byline
+        :badge => 0,              # Hide vendor logo
+        :portrait => 0,           # Don't show user's portrait
+        :autoplay => 1,           # Autostart the video
+        :title => 0               # Hide video title
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:Wistia][:id]
+      settings = {
+        :autoPlay => true,      # Autostart the video
+        :chromeless => true,    # Don't show any controls
+        :playerColor => 'black' # Change player outlines to black
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:DailyMotion][:id]
+      settings = {
+        :autoplay => 1,         # Autostart the video 
+        :chromeless => 1,       # Don't show any controls 
+        :info => 0,             # Hide video information
+        :logo => 0,             # Hide vendor logo
+        :related => 0           # Don't show related videos at end
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
       settings = {
@@ -177,7 +193,10 @@ class RemoteVideo < Content
   end
 
   def render_preview
-    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
+    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || 
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id] ||
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Wistia][:id] || 
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:DailyMotion][:id]
       player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
       results = self.config['preview_code']
     elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
