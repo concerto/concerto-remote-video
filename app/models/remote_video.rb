@@ -13,9 +13,11 @@ class RemoteVideo < Content
 
   DISPLAY_NAME = 'Video'
   VIDEO_VENDORS = {
-     :HTTPVideo => { :id => "HTTPVideo", :name => "Video URL", :url => ""},
+    :HTTPVideo => { :id => "HTTPVideo", :name => "Self-hosted Video", :url => ""},
     :YouTube => { :id => "YouTube", :name => "YouTube", :url => "https://www.youtube.com/embed/" },
-    :Vimeo => { :id => "Vimeo", :name => "Vimeo", :url => "https://player.vimeo.com/video/" }
+    :Vimeo => { :id => "Vimeo", :name => "Vimeo", :url => "https://player.vimeo.com/video/" },
+    :Wistia => { :id => "Wistia", :name => "Wistia", :url => "https://fast.wistia.net/embed/iframe/" },
+    :DailyMotion => { :id => "DailyMotion", :name => "DailyMotion", :url => "https://www.dailymotion.com/embed/video/" }
   }
 
   attr_accessor :config
@@ -56,72 +58,71 @@ class RemoteVideo < Content
 
   # Load some info about this video from YouTube.
   def load_info
+    require 'video_info'
+
     # dont abort if there is a duration specified
     return if self.config['video_id'].nil? #|| !self.duration.nil?
     return if !self.new_record?
-
-    require 'net/http'
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
-      begin
-        video_id = URI.escape(self.config['video_id'])
-        url = "http://gdata.youtube.com/feeds/api/videos?q=#{video_id}&v=2&max-results=1&format=5&alt=jsonc"
-        json = Net::HTTP.get_response(URI.parse(url)).body
-        data = ActiveSupport::JSON.decode(json)
-      rescue MultiJson::ParseError => e
-        Rails.logger.error("Could not parse results from YouTube @ #{url}: #{e.message}: #{json}")
-        errors.add(:video_id, "Could not parse results from YouTube")
-        return
-      rescue
-        Rails.logger.error("YouTube not reachable @ #{url}.")
-        errors.add(:video_id, "Could not get information about video from YouTube")
-        return
-      end
-      if data['data']['totalItems'].to_i <= 0
-        Rails.logger.error('No video found from ' + url)
-        self.config['video_id'] = ''
-        return
-      end
-      return if data['data'].nil? || data['data']['items'].nil?
-      video_data = data['data']['items'][0]
-      self.config['video_id'] = video_data['id']
-      self.duration = video_data['duration'].to_i
-      self.config['thumb_url'] = video_data['thumbnail']['hqDefault']
-      self.config['title'] = video_data['title']
-      self.config['description'] = video_data['description']
+      video = VideoInfo.new("http://www.youtube.com/watch?v=#{URI.escape(self.config['video_id'])}")
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
-      data=[]
-      begin
-        video_id = URI.escape(self.config['video_id'])
-        url = "http://vimeo.com/api/v2/video/#{video_id}.json"
-        uri = URI.parse(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        request = Net::HTTP::Get.new(uri.request_uri)
-        response = http.request(request)
-        if response.code == '200'  #ok
-          json = response.body
-          data = ActiveSupport::JSON.decode(json)
-        end
-      rescue => e
-        Rails.logger.error("Could not get information about video from Vimeo @ #{url}: #{e.message}")
-        config['video_id'] = ''
-        return
-      end
-      if data.empty?
-        Rails.logger.debug('No video found from ' + url)
-        self.config['video_id'] = ''
-        return
-      end
-      video_data = data[0]
-      # some vimeo videos have zero for their duration, so in that case use what the user supplied
-      self.duration = (video_data['duration'].to_i > 0 ? video_data['duration'].to_i : self.duration.to_i)
-      self.config['thumb_url'] = video_data['thumbnail_small']
-      self.config['title'] = video_data['title']
-      self.config['description'] = video_data['description']
+      video = VideoInfo.new("http://vimeo.com/#{URI.escape(self.config['video_id'])}")
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:Wistia][:id]
+      video = VideoInfo.new("http://fast.wistia.com/embed/medias/#{URI.escape(self.config['video_id'])}")
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:DailyMotion][:id]
+      video = VideoInfo.new("http://dailymotion.com/video/#{URI.escape(self.config['video_id'])}")
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
-      self.config['thumb_url'] = ''
-      self.config['title'] = self.name
-      self.config['description'] = ''
+      # self hosted video, skip video info gem configuration below 
+      self.config['preview_code'] = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
+      self.config['video_available'] = true
+      return
     end
+
+    # Video info gem details
+    if !video.nil? and video.available?
+      # some vimeo videos have zero for their duration, so in that case use what the user supplied
+      self.duration = (video.duration.to_i > 0 ? video.duration.to_i : self.duration.to_i)
+      self.config['title'] = video.title
+      self.config['description'] = video.description
+      self.config['video_id'] = video.video_id
+      self.config['duration'] = video.duration
+      self.config['preview_url'] = video.embed_url
+      self.config['preview_code'] = video.embed_code
+      # set video thumbnail using video info or using YouTube image url to bypass API restrictions
+      if video.provider == VIDEO_VENDORS[:YouTube][:id]
+        self.config['thumb_url'] = "https://i.ytimg.com/vi/" + video.video_id + "/hqdefault.jpg"
+      else
+        self.config['thumb_url'] = video.thumbnail_large
+      end
+    end
+    # Store video availablility to skip preview rendering
+    self.config['video_available'] = video.available?
+  end
+
+  def self.preview(data)
+    require 'video_info'
+
+    begin
+      o = RemoteVideo.new()
+      o.config['video_id'] = data[:video_id]
+      o.config['video_vendor'] = data[:video_vendor]
+      o.load_info
+
+    rescue => e
+      return "Unable to preview.  #{e.message}"
+    end
+
+    return o.config
+  end
+
+  def preview
+    begin
+      results = render_preview
+    rescue => e
+      results = "Unable to preview.  #{e.message}"
+    end
+
+    return results
   end
 
   # Build a URL for an iframe player.
@@ -146,33 +147,6 @@ class RemoteVideo < Content
     end
   end
 
-  def self.preview(data)
-    begin
-      o = RemoteVideo.new()
-      o.config['video_id'] = data[:video_id]
-      o.config['video_vendor'] = data[:video_vendor]
-      o.config['allow_flash'] = data[:allow_flash]
-      o.name = data[:name]
-      o.duration = data[:duration]
-
-      results = o.render_preview
-    rescue => e
-      results = "Unable to preview.  #{e.message}"
-    end
-
-    return results
-  end
-
-  def preview
-    begin
-      results = render_preview
-    rescue => e
-      results = "Unable to preview.  #{e.message}"
-    end
-
-    return results
-  end
-
   def render_details
     if self.config['video_vendor'] == VIDEO_VENDORS[:YouTube][:id]
       settings = {
@@ -186,14 +160,30 @@ class RemoteVideo < Content
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:Vimeo][:id]
       settings = {
-        :api => 1,              # use Javascript API
-        :player_id => 'playerv', #arbitrary id of iframe 
-        :byline => 0,
-        :portrait => 0,
-        :autoplay => 1
+        :api => 1,                # use Javascript API
+        :player_id => 'playerv',  #arbitrary id of iframe
+        :byline => 0,             # Hide video byline
+        :badge => 0,              # Hide vendor logo
+        :portrait => 0,           # Don't show user's portrait
+        :autoplay => 1,           # Autostart the video
+        :title => 0               # Hide video title
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:Wistia][:id]
+      settings = {
+        :autoPlay => true,      # Autostart the video
+        :chromeless => true,    # Don't show any controls
+        :playerColor => 'black' # Change player outlines to black
+      }
+    elsif self.config['video_vendor'] == VIDEO_VENDORS[:DailyMotion][:id]
+      settings = {
+        :autoplay => 1,         # Autostart the video 
+        :chromeless => 1,       # Don't show any controls 
+        :info => 0,             # Hide video information
+        :logo => 0,             # Hide vendor logo
+        :related => 0           # Don't show related videos at end
       }
     elsif self.config['video_vendor'] == VIDEO_VENDORS[:HTTPVideo][:id]
-      settings = { 
+      settings = {
         :autoplay => 1,         # Autostart the video
         :end => self.duration,  # Stop it around the duration
         :controls => 0,         # Don't show any controls
@@ -203,11 +193,14 @@ class RemoteVideo < Content
   end
 
   def render_preview
-    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id]
+    if self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:YouTube][:id] || 
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Vimeo][:id] ||
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:Wistia][:id] || 
+       self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:DailyMotion][:id]
       player_settings = { :end => self.duration, :rel => 0, :theme => 'light', :iv_load_policy => 3 }
-      results = "<iframe id=\"player\" type=\"text/html\" width=\"100%\" src=\"#{self.player_url(player_settings)}\" frameborder=\"0\"></iframe>"
+      results = self.config['preview_code']
     elsif self.config['video_vendor'] == RemoteVideo::VIDEO_VENDORS[:HTTPVideo][:id]
-      results = "<video preload controls width=\"100%\"><source src=\"#{self.config['video_id']}\" /></video>"
+      results = self.config['preview_code']
     end
 
     results

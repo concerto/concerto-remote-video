@@ -9,6 +9,7 @@ module ConcertoRemoteVideo
     # Define plugin information for the Concerto application to read
     def plugin_info(plugin_info_class)
       @plugin_info ||= plugin_info_class.new do
+        add_route("concerto-remote-video", ConcertoRemoteVideo::Engine)
         add_view_hook "frontend/ScreensController", :concerto_frontend_plugins, partial: "frontend/concerto_remote_video.html"
       end
     end

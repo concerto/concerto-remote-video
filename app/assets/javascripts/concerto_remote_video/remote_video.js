@@ -2,104 +2,110 @@ var initializedRemoteVideoHandlers = false;
 function initializeRemoteVideoHandlers() {
   if (!initializedRemoteVideoHandlers) {
 
-    function getVideoInfo() {
-      // need to know which vendor
-      // will place title, description, duration into 'div.remote-video-info'
+    function getVideoPreview() {
+      var preview_url = '/concerto-remote-video/preview';
 
-      var info = '<p>Video details could not be determined.</p>';
-      var vendor = $('select#remote_video_config_video_vendor').val();
+      // Form video details
       var video_id = $('input#remote_video_config_video_id').val();
-      var info_el = $('.remote-video-info');
-      var preview_div = $('#preview_div');
-      $(preview_div).empty();
+      var video_vendor = $('select#remote_video_config_video_vendor').val();
 
-      if (info_el.length != 0) {
-        // we found the summary box
-        if (typeof vendor != 'undefined') {
-          // we found the vendor selection, call appropriate api
-          if (vendor == 'YouTube') {
-            $(info_el).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
-            // todo: dont search if video_id is empty
-            $.ajax({
-              url: '//gdata.youtube.com/feeds/api/videos?q='+ encodeURIComponent(video_id) +'&v=2&max-results=1&format=5&alt=jsonc',
-              dataType: 'jsonp',
-              timeout: 4000,
-              success: function (data) {
-                if (parseInt(data['data']['totalItems']) > 0) {
-                  // we got something, repoint data to first item in results
-                  data = data['data']['items'];
-                  $(info_el).empty().html('<img src="' + data[0].thumbnail.hqDefault + '"/><h4>' + data[0].title + '</h4><i>' + data[0].duration + ' secs</i><br/><p>' + data[0].description + '</p>');
-                  previewVideo(data[0].id);
-                } else {
-                  $(info_el).empty().html(info);
-                }
-              },
-              error: function (xoptions, textStatus)  {
-                $(info_el).empty().html(info);
-              }
-            });
-          } else if (vendor == 'Vimeo') {
-            $(info_el).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
-            $.ajax({
-              url: '//vimeo.com/api/v2/video/' + encodeURIComponent(video_id) + '.json',
-              dataType: 'jsonp',
-              timeout: 4000,
-              success: function (data) {
-                if (data.length > 0) {
-                  // we got something
-                  $(info_el).empty().html('<img src="' + data[0].thumbnail_small + '"/><h4>' + data[0].title + '</h4><i>' + data[0].duration + ' secs</i><br/><p>' + data[0].description + '</p>');
-                  previewVideo();
-                } else {
-                  $(info_el).empty().html(info);
-                }
-              },
-              error: function (xoptions, textStatus)  {
-                $(info_el).empty().html(info);
-              }
-            });
-          } else if (vendor == 'HTTPVideo') {
-            $(info_el).empty();
-            if (video_id != "")
-            {
-              previewVideo();
-            }
+      // Loading icon
+      if (video_id.length != 0) {
+        $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
+        $('.remote-video-info').empty();
+        // Video preview request
+        $.ajax({
+          type: 'POST',
+          url: preview_url,
+          data: { 
+            video_id: video_id,
+            video_vendor: video_vendor
+          },
+          success: function(data) {
+            loadVideoInfo(data);
+            loadVideoPreview(data); 
+          },
+          error: function(e) {
+            loadVideoPreview({video_available: false});
           }
-        }
+        });
       }
     }
 
-    function previewVideo(video_id) {
-      var url = $('input#remote_video_config_video_id').data('url');
-      if (url) {
-        if (video_id == null) {
-          video_id = $('input#remote_video_config_video_id').val();
-        }
-        $("#preview_div").load(url, { data: { 
-          video_vendor: $('select#remote_video_config_video_vendor').val(), 
-          video_id: video_id, 
-          allow_flash: $('input#remote_video_config_allow_flash').val(),
-          duration: $('input#remote_video_duration').val(),
-          name: $('input#remote_video_name').val()
-        }, type: 'RemoteVideo' });
+    function loadVideoInfo(data) {
+      if (data['video_available']) {
+        // Target elements for setting video info
+        var info_el = $('.remote-video-info');
+        var name_el = $('input#remote_video_name');
+        var duration_el = $('input#remote_video_duration');
+        // Initialize info content
+        var title = '';
+        var description = '<p></p>';
+        var duration = '';
+        var vendor = data['video_vendor'];
+
+        if (vendor == 'HTTPVideo') {
+          $(info_el).empty();
+          return;
+        } else {
+          // YouTube no longer returns these details without an API key
+          if (vendor != 'YouTube') {
+            if (data['description']) {
+              // Preview video description
+              var description = '<p>' + data['description'] + '</p>';
+            } 
+            if (data['title']) {
+              // Set content title to video returned title
+              name_el.val(data['title']);
+            }
+            if (data['duration']) {
+              // Set content duration to video duration
+              duration = '<i>' + data['duration'] + ' secs</i>';
+              duration_el.val(data['duration']);
+            }
+          }
+        } 
+
+        // Load video info 
+        var info = '<img src="'+data['thumb_url']+'"/></h4>'+duration+'<br/>'+description; 
+        $(info_el).empty().html(info);
+      }
+    }
+
+    function loadVideoPreview(data) {
+      var preview_el = $('#preview_div');
+      if (data['video_available']) {
+        $(preview_div).empty().html(data['preview_code']);
+      } else {
+        $(preview_div).empty();
       }
     }
 
     function updateTooltip() {
       var vendor = $('select#remote_video_config_video_vendor').val();
+      var hint_el = $('div#video_id_hint');
+      var id_el = $('input#remote_video_config_video_id');
+
       if (vendor == 'YouTube') {
-        $('input#remote_video_config_video_id').attr("placeholder", "DGbqvYbPZBY");
-        $('div#video_id_hint').html('Specify the video id or keywords');
+        id_el.attr('placeholder', 'DGbqvYbPZBY');
+        hint_el.html('Specify the exact YouTube video id');
       } else if (vendor == 'Vimeo') {
-        $('input#remote_video_config_video_id').attr("placeholder", "4224811");
-        $('div#video_id_hint').html('Specify the exact vimeo video id');
+        id_el.attr('placeholder', '4224811');
+        hint_el.html('Specify the exact vimeo video id');
       } else if (vendor == 'HTTPVideo') {
-        $('input#remote_video_config_video_id').attr("placeholder", "http://media.w3.org/2010/05/sintel/trailer.mp4");
-        $('div#video_id_hint').html('Specify the url of the video');
+        id_el.attr('placeholder', 'http://media.w3.org/2010/05/sintel/trailer.mp4');
+        hint_el.html('Specify the url of the video');
+      } else if (vendor == 'Wistia') {
+        id_el.attr('placeholder', 'g5pnf59ala');
+        hint_el.html('Specify the exact Wistia video id');
+      } else if (vendor == 'DailyMotion') {
+        id_el.attr('placeholder', 'x23shps');
+        hint_el.html('Specify the exact DailyMotion video id');
       }
     }
 
-    $('input#remote_video_config_video_id').on('blur', getVideoInfo);
-    $('select#remote_video_config_video_vendor').on('change', getVideoInfo);
+    $('input#remote_video_config_video_id').on('blur', getVideoPreview);
+    $('select#remote_video_config_video_vendor').on('change', getVideoPreview);
     $('select#remote_video_config_video_vendor').on('change', updateTooltip);
 
     initializedRemoteVideoHandlers = true;
