@@ -1,45 +1,5 @@
-<!--
-The `concerto-remote-video` element provides embedded video
--->
-<dom-module id="concerto-remote-video">
-  <style>
-    :host {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    #video {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-
-  <template>
-    <iframe id="video" frameBorder="0"></iframe>
-  </template>
-
-  <script>
-    ConcertoRemoteVideo = Polymer({
-      is: "concerto-remote-video",
-
-      behaviors: [ConcertoBehaviors.BaseContent],
-
-      properties: {
-        baseUrl: String,
-        path: {
-          type: String,
-          observer: 'pathChanged'
-        },
-        config: Object
-      },
-
-      pathChanged: function() {
-        this.$.video.src = this.path;
-      }
-    });
-  </script>
-</dom-module>
-<script>
-  ConcertoBehaviors.ContentFactory.registerContent("concerto-remote-video", "ConcertoRemoteVideo");
-</script>
+<% content_for :head do %>
+<!-- from concerto-remote-video -->
+  <%= tag "link", rel: "import", href: asset_path("concerto_remote_video/concerto-remote-video.html") %>
+<!-- end from concerto-remote-video -->
+<% end %>
