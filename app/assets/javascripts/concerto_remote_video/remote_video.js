@@ -11,7 +11,7 @@ function initializeRemoteVideoHandlers() {
 
       // Loading icon
       if (video_id.length != 0) {
-        $(preview_div).empty().html('<i class=\"ficon-spinner icon-spin\"></i> searching...');
+        $(preview_div).empty().html('<i class=\"fa fa-spinner fa-spin\"></i> searching...');
         $('.remote-video-info').empty();
         // Video preview request
         $.ajax({
