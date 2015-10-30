@@ -26,7 +26,8 @@ function initializeRemoteVideoHandlers() {
             loadVideoPreview(data); 
           },
           error: function(e) {
-            loadVideoPreview({video_available: false});
+            //loadVideoPreview({video_available: false});
+            $(preview_div).empty().text(e.responseText);
           }
         });
       }
