@@ -35,7 +35,17 @@ The `concerto-remote-video` element provides embedded video
       },
 
       pathChanged: function() {
-        this.$.video.src = this.path;
+        if (this.path.includes('http_video=true')) {
+          // Remove the <iframe> and use a <video> instead
+          this.$.video.remove();
+          var video = document.createElement('video');
+          video.id = 'video';
+          video.src = this.path;
+          video.autoplay = true;
+          this.appendChild(video);
+        } else {
+          this.$.video.src = this.path;
+        }
       }
     });
   </script>
