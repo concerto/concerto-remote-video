@@ -187,6 +187,7 @@ class RemoteVideo < Content
         :autoplay => 1,         # Autostart the video
         :end => self.duration,  # Stop it around the duration
         :controls => 0,         # Don't show any controls
+        :http_video => true     # Pass http video
       }
     end
     {:path => player_url(settings)}
