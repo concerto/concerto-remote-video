@@ -1,3 +1,3 @@
 module ConcertoRemoteVideo
-  VERSION = "1.1"
+  VERSION = '1.2'.freeze
 end
