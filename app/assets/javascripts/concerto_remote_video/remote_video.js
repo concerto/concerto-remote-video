@@ -113,5 +113,4 @@ function initializeRemoteVideoHandlers() {
   }
 }
 
-$(document).ready(initializeRemoteVideoHandlers);
-$(document).on('page:change', initializeRemoteVideoHandlers);
+$(document).on('turbolinks:load', initializeRemoteVideoHandlers);
