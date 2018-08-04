@@ -8,4 +8,6 @@ To install this plugin, go to the Plugin management page in concerto, select Rub
 * YouTube
 * Vimeo
 
+For autoplay of videos under Chrome, see this forum post: https://groups.google.com/d/msg/concerto-digital-signage/4rrfc2ZzT8A/zlqUvLXaAgAJ
+
 Concerto 2 Remove Video is licensed under the Apache License, Version 2.0.
